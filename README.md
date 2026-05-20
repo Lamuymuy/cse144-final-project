@@ -14,6 +14,10 @@
 ```bash
 pip install -r requirements.txt
 ```
+## Data
+```bash
+Data from kaggle competition page /train and /test
+```
 
 ## Training
 ```bash
