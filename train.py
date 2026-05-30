@@ -57,7 +57,7 @@ with torch.no_grad():
         img = Image.open(path).convert("RGB")
         img = transform(img).unsqueeze(0).cuda()
         preds.append(model(img).argmax(1).item())
-        ids.append(os.path.basename(path))  # keeps "0.jpg" format
+        ids.append(os.path.basename(path))
 
 sub = pd.DataFrame({"ID": ids, "Label": preds})
 sub.to_csv("submission.csv", index=False)
