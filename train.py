@@ -28,16 +28,16 @@ train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
 classes = dataset.classes
 print("Label mapping sample:", list(dataset.class_to_idx.items())[:5])
 
-# Model
-model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
-model.fc = nn.Linear(model.fc.in_features, 100)
+# Model - swapped from ResNet to Efficientnet to improve score
+model = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.DEFAULT)
+model.classifier[1] = nn.Linear(model.classifier[1].in_features, 100)
 model = model.to(device)
 
 # Train
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 criterion = nn.CrossEntropyLoss()
 
-for epoch in range(10):
+for epoch in range(15): # increased epochs from 10 to 15
     model.train()
     total, correct = 0, 0
     for images, labels in train_loader:
