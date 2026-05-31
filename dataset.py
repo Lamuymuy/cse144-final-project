@@ -32,6 +32,13 @@ def get_dataloaders(data_dir, batch_size=32, val_split=0.2,
 
     full_train = datasets.ImageFolder(root=f"{data_dir}/train", transform=train_tf)
 
+    # Folders are named "0".."99"; use the folder name as the integer label
+    # so that predictions line up with the Kaggle submission label space.
+    # (ImageFolder otherwise sorts class names lexicographically: "0","1","10","100",...)
+    full_train.class_to_idx = {cls: int(cls) for cls in full_train.classes}
+    full_train.targets = [int(full_train.classes[t]) for t in full_train.targets]
+    full_train.samples = [(s, int(full_train.classes[t])) for s, t in full_train.samples]
+
     n_val   = int(len(full_train) * val_split)
     n_train = len(full_train) - n_val
     train_set, val_set = random_split(

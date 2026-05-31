@@ -1,34 +1,32 @@
-import os, torch, glob
+import os, glob
+import torch
 import torch.nn as nn
 import pandas as pd
-from torchvision import transforms, models
-from torch.utils.data import DataLoader
-from torchvision.datasets import ImageFolder
+from torchvision import models
 from PIL import Image
 
+from utils import set_seed, get_device
+from dataset import get_dataloaders, get_transforms
+
 DATA_PATH = "/kaggle/input/competitions/ucsc-cse-144-spring-2026-final-project"
-TRAIN_DIR = f"{DATA_PATH}/train"
 TEST_DIR  = f"{DATA_PATH}/test"
 
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
+set_seed(42)
+device = get_device()
 
-# Load dataset - verify label mapping
-dataset = ImageFolder(TRAIN_DIR, transform=transform)
-dataset.class_to_idx = {cls: int(cls) for cls in dataset.classes}
-dataset.targets = [int(dataset.classes[t]) for t in dataset.targets]
-dataset.samples = [(s, int(dataset.classes[t])) for s, t in dataset.samples]
-print("Label mapping sample:", list(dataset.class_to_idx.items())[:5])
-
-train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
+train_loader, _, classes = get_dataloaders(
+    data_dir=DATA_PATH,
+    batch_size=32,
+    val_split=0.0,
+    augment=False,
+    seed=42,
+)
+print("Label mapping sample:", classes[:5])
 
 # Model
 model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 model.fc = nn.Linear(model.fc.in_features, 100)
-model = model.cuda()
+model = model.to(device)
 
 # Train
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -38,7 +36,7 @@ for epoch in range(10):
     model.train()
     total, correct = 0, 0
     for images, labels in train_loader:
-        images, labels = images.cuda(), labels.cuda()
+        images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
         loss = criterion(model(images), labels)
         loss.backward()
@@ -49,13 +47,14 @@ for epoch in range(10):
 
 # Generate submission - all test images, keep .jpg in ID
 model.eval()
+test_transform = get_transforms(augment=False)
 test_images = sorted(glob.glob(TEST_DIR + "/*.jpg"),
                      key=lambda x: int(os.path.basename(x).replace(".jpg","")))
 ids, preds = [], []
 with torch.no_grad():
     for path in test_images:
         img = Image.open(path).convert("RGB")
-        img = transform(img).unsqueeze(0).cuda()
+        img = test_transform(img).unsqueeze(0).to(device)
         preds.append(model(img).argmax(1).item())
         ids.append(os.path.basename(path))
 
