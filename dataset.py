@@ -39,6 +39,12 @@ def get_dataloaders(data_dir, batch_size=32, val_split=0.2,
     full_train.targets = [int(full_train.classes[t]) for t in full_train.targets]
     full_train.samples = [(s, int(full_train.classes[t])) for s, t in full_train.samples]
 
+    # bypass random_split entirely when no val set needed
+    if val_split == 0.0:
+        train_loader = DataLoader(full_train, batch_size=batch_size,
+                                  shuffle=True, num_workers=num_workers)
+        return train_loader, None, full_train.classes
+
     n_val   = int(len(full_train) * val_split)
     n_train = len(full_train) - n_val
     train_set, val_set = random_split(
