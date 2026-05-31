@@ -48,7 +48,7 @@ def get_dataloaders(data_dir, batch_size=32, val_split=0.2,
     )
 
     if n_val > 0:
-    val_set.dataset.transform = val_tf # changed to avoid running if there is no val 
+        val_set.dataset.transform = val_tf # changed to avoid running if there is no val 
 
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True,  num_workers=num_workers)
     val_loader   = DataLoader(val_set,   batch_size=batch_size, shuffle=False, num_workers=num_workers)
