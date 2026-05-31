@@ -28,7 +28,7 @@ train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
 classes = dataset.classes
 print("Label mapping sample:", list(dataset.class_to_idx.items())[:5])
 
-# Model - swapped from ResNet to Efficientnet to improve score
+# Model - swapped from ResNet to Efficientnet to improve score https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.efficientnet_b0.html
 model = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.DEFAULT)
 model.classifier[1] = nn.Linear(model.classifier[1].in_features, 100)
 model = model.to(device)
