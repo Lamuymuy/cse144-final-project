@@ -21,6 +21,7 @@ train_transform = transforms.Compose([
     transforms.RandomRotation(15),
     transforms.RandomCrop(224, padding=16),
     transforms.ColorJitter(brightness=0.2, contrast=0.2),
+    transforms.RandomGrayscale(p=0.1),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
