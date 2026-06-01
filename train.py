@@ -14,13 +14,25 @@ TEST_DIR  = f"{DATA_PATH}/test"
 set_seed(42)
 device = get_device()
 
+# train uses augmentation to fight overfitting on the 1000-image training set
+train_transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomRotation(15),
+    transforms.RandomCrop(224, padding=16),
+    transforms.ColorJitter(brightness=0.2, contrast=0.2),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
+
+# inference uses plain transform (no randomness) so predictions are deterministic
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-dataset = ImageFolder(f"{DATA_PATH}/train", transform=transform)
+dataset = ImageFolder(f"{DATA_PATH}/train", transform=train_transform)
 dataset.class_to_idx = {cls: int(cls) for cls in dataset.classes}
 dataset.targets = [int(dataset.classes[t]) for t in dataset.targets]
 dataset.samples = [(s, int(dataset.classes[t])) for s, t in dataset.samples]
@@ -28,16 +40,16 @@ train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
 classes = dataset.classes
 print("Label mapping sample:", list(dataset.class_to_idx.items())[:5])
 
-# Model - swapped from ResNet to Efficientnet to improve score https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.efficientnet_b0.html
-model = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.DEFAULT)
-model.classifier[1] = nn.Linear(model.classifier[1].in_features, 100)
+# Model - reverted to ResNet18: smaller model less prone to overfit 1000 training images
+model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+model.fc = nn.Linear(model.fc.in_features, 100)
 model = model.to(device)
 
-# Train
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+# Train - lr=1e-4 is the standard fine-tuning rate to preserve pretrained features
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 criterion = nn.CrossEntropyLoss()
 
-for epoch in range(15): # increased epochs from 10 to 15
+for epoch in range(20): # increased epochs from 15 to 20 to give augmentation more iterations
     model.train()
     total, correct = 0, 0
     for images, labels in train_loader:
