@@ -8,6 +8,7 @@ def set_seed(seed: int = 42):
     Set random seeds across all libraries to ensure reproducibility.
     Call this at the beginning of both train.py and inference.py.
     """
+    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
     os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
@@ -19,7 +20,7 @@ def set_seed(seed: int = 42):
     torch.backends.cuda.matmul.allow_tf32 = False
     torch.backends.cudnn.allow_tf32 = False
     try:
-        torch.use_deterministic_algorithms(True)
+        torch.use_deterministic_algorithms(True, warn_only=True)
     except Exception as e:
         print(f"Warning: could not enable full deterministic algorithms: {e}")
         
