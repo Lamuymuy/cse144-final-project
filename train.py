@@ -56,10 +56,12 @@ for epoch in range(20): # increased epochs from 15 to 20 to give augmentation mo
     for images, labels in train_loader:
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
-        loss = criterion(model(images), labels)
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        correct += (model(images).argmax(1) == labels).sum().item()
+        correct += (outputs.argmax(1) == labels).sum().item() # only 1 forward pass
         total += labels.size(0)
     print(f"Epoch {epoch+1}: Acc = {correct/total:.3f}")
 
