@@ -50,7 +50,7 @@ model = model.to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 criterion = nn.CrossEntropyLoss()
 
-for epoch in range(20): # increased epochs from 15 to 20 to give augmentation more iterations
+for epoch in range(30): # increased epochs 20 to 30 to give augmentation more iterations
     model.train()
     total, correct = 0, 0
     for images, labels in train_loader:
