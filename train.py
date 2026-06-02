@@ -48,7 +48,6 @@ model = model.to(device)
 
 # Train - lr=1e-4 is the standard fine-tuning rate to preserve pretrained features
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1) # https://docs.pytorch.org/docs/2.12/generated/torch.optim.lr_scheduler.StepLR.html
 criterion = nn.CrossEntropyLoss()
 
 for epoch in range(30): # increased epochs 20 to 30 to give augmentation more iterations
@@ -63,7 +62,6 @@ for epoch in range(30): # increased epochs 20 to 30 to give augmentation more it
         optimizer.step()
         correct += (outputs.argmax(1) == labels).sum().item() # only 1 forward pass
         total += labels.size(0)
-    lr_scheduler.step()  # fine tune lr later into epochs
     print(f"Epoch {epoch+1}: Acc = {correct/total:.3f}")
 
 # Inference
