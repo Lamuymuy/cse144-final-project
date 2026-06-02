@@ -59,12 +59,11 @@ for epoch in range(30): # increased epochs 20 to 30 to give augmentation more it
         optimizer.zero_grad()
         outputs = model(images)
         loss = criterion(outputs, labels)
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         correct += (outputs.argmax(1) == labels).sum().item() # only 1 forward pass
         total += labels.size(0)
-    scheduler.step()  # fine tune lr later into epochs
+    lr_scheduler.step()  # fine tune lr later into epochs
     print(f"Epoch {epoch+1}: Acc = {correct/total:.3f}")
 
 # Inference
