@@ -50,16 +50,17 @@ model = model.to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 criterion = nn.CrossEntropyLoss()
 
-for epoch in range(20): # increased epochs from 15 to 20 to give augmentation more iterations
+for epoch in range(30): # increased epochs 20 to 30 to give augmentation more iterations
     model.train()
     total, correct = 0, 0
     for images, labels in train_loader:
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
-        loss = criterion(model(images), labels)
+        outputs = model(images)
+        loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-        correct += (model(images).argmax(1) == labels).sum().item()
+        correct += (outputs.argmax(1) == labels).sum().item() # only 1 forward pass
         total += labels.size(0)
     print(f"Epoch {epoch+1}: Acc = {correct/total:.3f}")
 
