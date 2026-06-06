@@ -44,12 +44,12 @@ print("Label mapping sample:", list(dataset.class_to_idx.items())[:5])
 
 #Cutmix
 def cutmix_batch(images, labels, alpha=1.0):
-    lambda = mp.random.beta(alpha, alpha)
+    lam = np.random.beta(alpha, alpha)
     batch_size = images.size(0)
     random_ind = torch.randperm(batch_size).to(images.device)
-    W, H = images.size(3), image.size(2)
-    cut_w = int(W * np.sqrt(1 - lambda))
-    cut_h = int(H * np.sqrt(1 - lambda))
+    W, H = images.size(3), images.size(2)
+    cut_w = int(W * np.sqrt(1 - lam))
+    cut_h = int(H * np.sqrt(1 - lam))
     cx = np.random.randint(W)
     cy = np.random.randint(H)
     x1 = max(cx - cut_w // 2, 0)
@@ -58,7 +58,7 @@ def cutmix_batch(images, labels, alpha=1.0):
     y2 = min(cy + cut_h // 2, H)
     images[:, :, y1:y2, x1:x2] = images[random_ind, :, y1:y2, x1:x2]
     lam = 1 - ((x2 - x1) * (y2 - y1)) / (W * H)
-    return images, labels, labels[random_ind], lambda
+    return images, labels, labels[random_ind], lam
 
 # Model - reverted to ResNet18: smaller model less prone to overfit 1000 training images
 model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
