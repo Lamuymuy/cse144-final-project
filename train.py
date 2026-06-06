@@ -1,5 +1,4 @@
 import os, glob
-import numpy as np
 import torch
 import torch.nn as nn
 import pandas as pd
@@ -42,24 +41,6 @@ train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
 classes = dataset.classes
 print("Label mapping sample:", list(dataset.class_to_idx.items())[:5])
 
-#Cutmix
-def cutmix_batch(images, labels, alpha=1.0):
-    lam = np.random.beta(alpha, alpha)
-    batch_size = images.size(0)
-    random_ind = torch.randperm(batch_size).to(images.device)
-    W, H = images.size(3), images.size(2)
-    cut_w = int(W * np.sqrt(1 - lam))
-    cut_h = int(H * np.sqrt(1 - lam))
-    cx = np.random.randint(W)
-    cy = np.random.randint(H)
-    x1 = max(cx - cut_w // 2, 0)
-    x2 = min(cx + cut_w // 2, W)
-    y1 = max(cy - cut_h // 2, 0)
-    y2 = min(cy + cut_h // 2, H)
-    images[:, :, y1:y2, x1:x2] = images[random_ind, :, y1:y2, x1:x2]
-    lam = 1 - ((x2 - x1) * (y2 - y1)) / (W * H)
-    return images, labels, labels[random_ind], lam
-
 # Model - reverted to ResNet18: smaller model less prone to overfit 1000 training images
 model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 model.fc = nn.Linear(model.fc.in_features, 100)
@@ -74,22 +55,13 @@ for epoch in range(30):
     total, correct = 0, 0
     for images, labels in train_loader:
         images, labels = images.to(device), labels.to(device)
-
-        if np.random.random() > 0.5:  # apply cutmix 50% of batches
-            images, labels_a, labels_b, lam = cutmix_batch(images, labels)
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = lam * criterion(outputs, labels_a) + (1 - lam) * criterion(outputs, labels_b)
-        else:
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-
+        optimizer.zero_grad()              
+        outputs = model(images)            
+        loss = criterion(outputs, labels)  
         loss.backward()
         optimizer.step()
         correct += (outputs.argmax(1) == labels).sum().item()
         total += labels.size(0)
-
     print(f"Epoch {epoch+1}: Acc = {correct/total:.3f}")
     
 # Inference
