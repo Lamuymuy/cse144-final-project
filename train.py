@@ -57,7 +57,7 @@ for param in model.fc.parameters():
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 criterion = nn.CrossEntropyLoss()
 
-for epoch in range(50):
+for epoch in range(60):
 
     if epoch == 10:  # unfreeze full backbone after epoch 10
         for param in model.parameters():
