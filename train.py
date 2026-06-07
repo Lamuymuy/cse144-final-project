@@ -46,24 +46,35 @@ model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 model.fc = nn.Linear(model.fc.in_features, 100)
 model = model.to(device)
 
+# Freeze backbone, train only head (1st 10 epochs) 
+# https://python.plainenglish.io/how-to-freeze-model-weights-in-pytorch-for-transfer-learning-step-by-step-tutorial-a533a58051ef
+for param in model.parameters():
+    param.requires_grad = False
+for param in model.fc.parameters():
+    param.requires_grad = True
+    
 # Train - lr=1e-4 is the standard fine-tuning rate to preserve pretrained features
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 criterion = nn.CrossEntropyLoss()
 
 for epoch in range(50):
+
+    if epoch == 10:  # unfreeze full backbone after epoch 10
+        for param in model.parameters():
+            param.requires_grad = True
+
     model.train()
     total, correct = 0, 0
     for images, labels in train_loader:
         images, labels = images.to(device), labels.to(device)
-        optimizer.zero_grad()              
-        outputs = model(images)            
-        loss = criterion(outputs, labels)  
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
         correct += (outputs.argmax(1) == labels).sum().item()
         total += labels.size(0)
     print(f"Epoch {epoch+1}: Acc = {correct/total:.3f}")
-    
 # Inference
 model.eval()
 test_images = sorted(glob.glob(TEST_DIR + "/*.jpg"),
