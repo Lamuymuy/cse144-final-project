@@ -8,7 +8,7 @@
 ![leaderboard screenshot](assets/leaderboard.png)
 
 ## Model Weights
-[Download from Google Drive](LINK_HERE)
+[Download from Google Drive](https://drive.google.com/file/d/1a8c4x00rq9HMVfNBnzXWyyzfIJBGSKqZ/view)
 
 ## Setup
 ```bash
