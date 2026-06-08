@@ -92,7 +92,7 @@ This loads the trained ResNet-18, runs inference on all 1,000 test images, and w
 | + RandomGrayscale | 0.71818 |
 | + epochs → 30 | 0.73636 |
 | + epochs → 40 | 0.74545 |
-| **+ epochs → 50, ** | **0.75454**  |
+| + epochs → 50 | **0.75454**  |
 
 ## Reproducing Results
 
