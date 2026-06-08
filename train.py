@@ -58,4 +58,42 @@ for epoch in range(50):
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-        correct += (outputs.argmax(1) == labels).su
+        correct += (outputs.argmax(1) == labels).sum().item()
+        total += labels.size(0)
+    print(f"Epoch {epoch+1}: Acc = {correct/total:.3f}")
+
+# Inference with TTA
+model.eval()
+tta_transforms = [
+    transform,
+    transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.RandomHorizontalFlip(p=1.0),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ]),
+    transforms.Compose([
+        transforms.Resize((240, 240)),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ]),
+]
+
+test_images = sorted(glob.glob(TEST_DIR + "/*.jpg"),
+                     key=lambda x: int(os.path.basename(x).replace(".jpg", "")))
+ids, preds = [], []
+with torch.no_grad():
+    for path in test_images:
+        img = Image.open(path).convert("RGB")
+        probs = torch.zeros(100).to(device)
+        for tf in tta_transforms:
+            probs += model(tf(img).unsqueeze(0).to(device)).softmax(dim=1).squeeze()
+        preds.append(probs.argmax().item())
+        ids.append(os.path.basename(path))
+
+sub = pd.DataFrame({"ID": ids, "Label": preds})
+sub.to_csv("submission.csv", index=False)
+print(f"Shape: {sub.shape}")
+print(sub.head(10))
+print("Done!")
