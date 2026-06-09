@@ -25,7 +25,6 @@ train_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
-
 # inference uses plain transform (no randomness) so predictions are deterministic
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -41,28 +40,16 @@ train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
 classes = dataset.classes
 print("Label mapping sample:", list(dataset.class_to_idx.items())[:5])
 
-# Model - reverted to ResNet18: smaller model less prone to overfit 1000 training images
+# Model - ResNet18: smaller model less prone to overfit 1000 training images
 model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 model.fc = nn.Linear(model.fc.in_features, 100)
 model = model.to(device)
 
-# Freeze backbone, train only head (1st 10 epochs) 
-# https://python.plainenglish.io/how-to-freeze-model-weights-in-pytorch-for-transfer-learning-step-by-step-tutorial-a533a58051ef
-for param in model.parameters():
-    param.requires_grad = False
-for param in model.fc.parameters():
-    param.requires_grad = True
-    
-# Train - lr=1e-4 is the standard fine-tuning rate to preserve pretrained features
+# Train - lr=1e-4 preserves pretrained features; full fine-tuning, no frozen layers
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 criterion = nn.CrossEntropyLoss()
 
-for epoch in range(60):
-
-    if epoch == 10:  # unfreeze full backbone after epoch 10
-        for param in model.parameters():
-            param.requires_grad = True
-
+for epoch in range(50):
     model.train()
     total, correct = 0, 0
     for images, labels in train_loader:
@@ -75,6 +62,12 @@ for epoch in range(60):
         correct += (outputs.argmax(1) == labels).sum().item()
         total += labels.size(0)
     print(f"Epoch {epoch+1}: Acc = {correct/total:.3f}")
+
+# Save trained weights so they can be uploaded to Drive and reloaded by predict.py
+WEIGHTS_PATH = "/kaggle/working/resnet18_aug_lr1e-4_50ep.pth"
+torch.save(model.state_dict(), WEIGHTS_PATH)
+print(f"Saved weights to {WEIGHTS_PATH}")
+
 # Inference
 model.eval()
 test_images = sorted(glob.glob(TEST_DIR + "/*.jpg"),
@@ -86,7 +79,6 @@ with torch.no_grad():
         img = transform(img).unsqueeze(0).to(device)
         preds.append(model(img).argmax(1).item())
         ids.append(os.path.basename(path))
-
 sub = pd.DataFrame({"ID": ids, "Label": preds})
 sub.to_csv("submission.csv", index=False)
 print(f"Shape: {sub.shape}")
