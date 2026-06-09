@@ -14,6 +14,7 @@ TEST_DIR  = f"{DATA_PATH}/test"
 set_seed(42)
 device = get_device()
 
+# train uses augmentation to fight overfitting on the 1000-image training set
 train_transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.RandomHorizontalFlip(),
@@ -24,7 +25,6 @@ train_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
-
 # inference uses plain transform (no randomness) so predictions are deterministic
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -45,9 +45,9 @@ model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 model.fc = nn.Linear(model.fc.in_features, 100)
 model = model.to(device)
 
-# Train - weight_decay for regularization, label_smoothing to prevent overconfidence
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
-criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+# Train - lr=1e-4 is the standard fine-tuning rate to preserve pretrained features
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+criterion = nn.CrossEntropyLoss()
 
 for epoch in range(50):
     model.train()
@@ -68,34 +68,16 @@ WEIGHTS_PATH = "/kaggle/working/resnet18_aug_lr1e-4_50ep.pth"
 torch.save(model.state_dict(), WEIGHTS_PATH)
 print(f"Saved weights to {WEIGHTS_PATH}")
 
-# Inference with TTA
+# Inference
 model.eval()
-tta_transforms = [
-    transform,
-    transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.RandomHorizontalFlip(p=1.0),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ]),
-    transforms.Compose([
-        transforms.Resize((240, 240)),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ]),
-]
-
 test_images = sorted(glob.glob(TEST_DIR + "/*.jpg"),
                      key=lambda x: int(os.path.basename(x).replace(".jpg", "")))
 ids, preds = [], []
 with torch.no_grad():
     for path in test_images:
         img = Image.open(path).convert("RGB")
-        probs = torch.zeros(100).to(device)
-        for tf in tta_transforms:
-            probs += model(tf(img).unsqueeze(0).to(device)).softmax(dim=1).squeeze()
-        preds.append(probs.argmax().item())
+        img = transform(img).unsqueeze(0).to(device)
+        preds.append(model(img).argmax(1).item())
         ids.append(os.path.basename(path))
 sub = pd.DataFrame({"ID": ids, "Label": preds})
 sub.to_csv("submission.csv", index=False)
