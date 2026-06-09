@@ -11,7 +11,7 @@ Our best public leaderboard score: **0.75454**
 ## Model Weights
 
 Trained weights (~45 MB) are hosted on Google Drive:
-[Download from Google Drive](PASTE_DRIVE_LINK_HERE)
+https://drive.google.com/file/d/13IeCiCNLPVnSnj4E8jhdrkK-G7do4_oq/view?usp=sharing
 
 ## Setup
 
