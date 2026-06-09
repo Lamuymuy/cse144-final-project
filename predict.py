@@ -8,7 +8,7 @@ from utils import set_seed, get_device
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--weights", default="assets/resnet18_aug_lr1e-4_20ep.pth")
+    parser.add_argument("--weights", default="assets/resnet18_aug_lr1e-4_50ep.pth")
     parser.add_argument("--test_dir",
         default="/kaggle/input/competitions/ucsc-cse-144-spring-2026-final-project/test")
     parser.add_argument("--out", default="submission.csv")
