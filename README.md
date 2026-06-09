@@ -6,7 +6,7 @@
 ## Kaggle Leaderboard
 
 Our best public leaderboard score: **0.75454**
-![leaderboard screenshot](assets/leaderboard.png)
+![leaderboard screenshot](leaderboard.png)
 
 ## Model Weights
 
